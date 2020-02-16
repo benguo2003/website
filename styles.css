@@ -31,9 +31,10 @@ footer, header, hgroup, menu, nav, section {
 	display: block;
 }
 a{
-	text-decoration: none;
+	text-decoration: underline orange;
 	text-transform: none;
 	color: blue;
+	
 }
 
 body {
@@ -73,6 +74,10 @@ strong {
 
 div , footer {
 	box-sizing: border-box;
+}
+
+li {
+	text-indent: 50px
 }
 
 /* Reset ends */
@@ -159,6 +164,10 @@ h1.contact {
 
 /*skills & intrests*/
 
+.tab {
+	display:i nline-block;
+	width: ONE-TAB-WIDTH;
+}
 .sections {
 	vertical-align: top;
 	display: inline-block;
@@ -207,7 +216,6 @@ h1.contact {
 	line-height: 22px;
 }
 
+
 /*skill and intrests ends*/
 
-
-/* End of all :P*/

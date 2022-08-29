@@ -3,5 +3,12 @@ html{
 }
 
 .content{
+  font-family: "Trirong", serif;
+  text-align: center;
+  line-height: 50px;
+}
+
+.pepe{
+  margin-top: 60px;
   text-align: center;
 }

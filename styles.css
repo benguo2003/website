@@ -1,19 +1,85 @@
-html{
-  background-color: orange;
+:root {
+  --colors: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
 }
 
-.content{
+body {
+  background: var(--colors);
+  background-size: 400% 400%;
+  animation: gradient 15s ease infinite;
+}
+
+h1 {
+  font-size: 25px;
+}
+
+p {
+  margin-top: 25px;
+  font-size: 20px;
+}
+
+.content {
+  color: white;
   font-family: "Trirong", serif;
   text-align: center;
   line-height: 50px;
 }
 
-#pepe{
-  margin-top: 40px;
-  max-width: 500px;
+.marriage-button-yes {
+  padding: 20px;
+  margin-right: 40px;
+  border-radius: 40px;
+  border-width: 5px;
+  border-color: white;
+  color: white;
+  background-color: var(--colors);
 }
 
-span{
-  color: black;
-  font-weight: bolder;
+.marriage-button-no {
+  padding: 20px;
+  margin-left: 40px;
+  border-radius: 40px;
+  border-width: 5px;
+  border-color: white;
+  color: white;
+  background-color: var(--colors);
+}
+
+.marriage-button-yes:hover {
+  background-color: rgb(21, 19, 19);
+  transition: background-color 0.5s;
+}
+
+.marriage-button-no:hover {
+  background-color: rgb(21, 19, 19);
+  transition: background-color 0.5s;
+}
+
+#ring {
+  max-width: 350px;
+}
+
+#adges {
+  max-width: 100px;
+}
+
+#accept {
+  display: none;
+  text-align: center;
+}
+
+#deny {
+  display: none;
+  text-align: center;
+}
+
+@keyframes gradient {
+  0% {
+      background-position: 0% 50%;
+  }
+  50% {
+      background-position: 100% 50%;
+  }
+  100% {
+      background-position: 0% 50%;
+  }
 }

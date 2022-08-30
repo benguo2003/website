@@ -1,5 +1,5 @@
 html{
-  background-color: pink;
+  background-color: orange;
 }
 
 .content{
@@ -9,6 +9,11 @@ html{
 }
 
 #pepe{
-  margin-top: 60px;
+  margin-top: 40px;
+  max-width: 500px;
 }
 
+span{
+  color: black;
+  font-weight: bolder;
+}

@@ -7,24 +7,45 @@
     <title>Ben Guo</title>
     <link rel="icon" type="image/x-icon" href="images/favicon.ico?">
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <script src="index.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300&family=Scheherazade+New&display=swap" rel="stylesheet">    <script src="index.js"></script>
   </head>
   <body>
+    <div class="toggleBar">
+      <input type="image" src="images/lightMode.webp" id="modeChange" onclick="changeMode()"/>
+    </div>
+    <h1> Ben Guo </h1>
     <div class="content">
-      <h1> Dear Womanpie, Will You Marry Me? </h1>
-      <img id="ring" src="images/ring2.png", alt="Ring">
-      <button class="marriage-button-yes" onclick="showAccept()"> YEPPERS </button>
-      <button class="marriage-button-no" onclick="showDeny()"> NOPERS </button>
-      <p> &#8593; Click to choose &#8593; </p>
-      <div id="accept">
-        <img id="adges" src="images/gladge.png", alt="Gladge">
-      </div>
-      <div id="deny">
-        <img id="adges" src="images/sadge.png", alt="Gladge">
-      </div>
-      <a href="https://www.facebook.com/benguo2003/" class="fa fa-facebook" target="__blank"></a>
-      <a href="https://www.linkedin.com/in/ben-guo-652645199/" class="fa fa-linkedin" target="__blank"></a>
+      <p> 
+        Hey There! I'm Ben, a current sophomore majoring in Computer Science <br>
+        at the University of California, Los Angeles. 
+
+      </p> 
+      <p> 
+        I'm currently interning at Yami as a software engineer, <br>
+        working on developing a web-app that displays <br>
+        demographics information to users.
+      </p> 
+      <p> 
+        I'm looking forward to becoming a software engineer, <br>
+        and more specifically, a game developer after graduation.
+      </p> 
+      <p> 
+        You can find me at any of these platforms below. <br> Also, feel free to reach out at
+        junbinbenguo@gmail.com!
+      </p> 
+    </div>
+    <div class="iconBar">
+      <a href="https://www.github.com/benguo2003" target="_blank">
+        <img id="github" src="images/github.png">
+      </a>
+      <a href="https://www.linkedin.com/in/ben-guo-652645199/" target="_blank">
+        <img id="linkedin" src="images/linkedin.png">
+      </a>
+      <a href="resume.pdf" target="_blank">
+        <img id="pdf" src="images/pdf.png">
+      </a>
     </div>
   </body>
 </html>

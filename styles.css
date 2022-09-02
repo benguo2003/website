@@ -1,120 +1,45 @@
-:root {
-  --colors: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+body {
+  background: rgb(107, 101, 101);
+  color: white;
+  text-align: center;
 }
 
-body {
-  background: var(--colors);
-  background-size: 400% 400%;
-  animation: gradient 15s ease infinite;
+.light-mode {
+  background-color: white;
+  color: black;
 }
 
 h1 {
-  font-size: 25px;
-}
-
-p {
-  margin-top: 25px;
-  font-size: 20px;
+  font-family: 'Scheherazade New', serif;
+  font-size: 35px;
 }
 
 .content {
-  color: white;
-  font-family: "Trirong", serif;
-  text-align: center;
-  line-height: 50px;
-}
-
-.marriage-button-yes {
-  padding: 20px;
-  margin-right: 40px;
-  border-radius: 40px;
-  border-width: 5px;
-  border-color: white;
-  color: white;
-  background-color: var(--colors);
-}
-
-.marriage-button-no {
-  padding: 20px;
-  margin-left: 40px;
-  border-radius: 40px;
-  border-width: 5px;
-  border-color: white;
-  color: white;
-  background-color: var(--colors);
-}
-
-.marriage-button-yes:hover {
-  background-color: rgb(21, 19, 19);
-  transition: background-color 0.5s;
-}
-
-.marriage-button-no:hover {
-  background-color: rgb(21, 19, 19);
-  transition: background-color 0.5s;
-}
-
-.marriage-button-yes:focus {
-  background-color: rgb(21, 19, 19);
-}
-
-.marriage-button-no:focus {
-  background-color: rgb(21, 19, 19);
-}
-
-
-#ring {
-  max-width: 350px;
+  font-family: "Cairo", sans-serif;
   display: block;
   margin: 0 auto;
-  margin-bottom: 25px;
 }
 
-#adges {
-  max-width: 100px;
-}
-
-#accept {
-  display: none;
+.toggleBar{
   text-align: center;
+
 }
 
-#deny {
-  display: none;
-  text-align: center;
+.iconBar {
+  display: block;
+  margin: 0 auto;
+  margin-top: 50px;
 }
 
-.fa {
-  padding: 10px;
-  font-size: 30px;
-  width: 40px;
-  text-align: center;
+#modeChange {
+  max-width: 50px;
+}
+
+#github, #linkedin, #pdf{
+  max-width: 50px;
+}
+
+a {
   text-decoration: none;
-  border-radius: 20px;
-} 
-
-.fa:hover {
-  opacity: 0.7;
 }
 
-.fa-facebook {
-  background: #3B5998;
-  color: white;
-}
-
-.fa-linkedin {
-  background: #007bb5;
-  color: white;
-}
-
-@keyframes gradient {
-  0% {
-      background-position: 0% 50%;
-  }
-  50% {
-      background-position: 100% 50%;
-  }
-  100% {
-      background-position: 0% 50%;
-  }
-}

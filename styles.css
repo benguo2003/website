@@ -39,6 +39,10 @@ h1 {
   max-width: 50px;
 }
 
+#github:hover, #linkedin:hover, #pdf:hover {
+  opacity: 0.7;
+}
+
 a {
   text-decoration: none;
 }

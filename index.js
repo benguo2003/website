@@ -9,13 +9,13 @@ function changeMode() {
 }
 
 function darkMode(element) {
-    element.className = "";
     document.getElementById('modeChange').src="/images/lightMode.webp";
+    element.className = "";
 }
 
 function lightMode(element) {
-    element.className = "light-mode";
     document.getElementById('modeChange').src="/images/darkMode.webp";
+    element.className = "light-mode";
 }
 
 

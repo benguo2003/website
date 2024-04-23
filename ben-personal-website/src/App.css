@@ -1,36 +1,32 @@
 body {
-  background: rgb(107, 101, 101);
-  color: white;
   text-align: center;
 }
 
 .light-mode {
-  background-color: white !important;
-  color: black !important;
+  background-color: white;
+  color: black;
 }
+
+.dark-mode {
+  background-color: black;
+  color: white;
+}
+
 
 h1 {
-  font-family: 'Scheherazade New', serif;
-  font-size: 35px;
-}
-
-
-h3 {
-  font-size: 25px;
-  color: pink;
-  font-weight: bold;
-  text-decoration: underline;
+  font-family: 'Cute Font', sans-serif;
+  font-size: 100px;
+  font-weight: 400;
+  font-style: normal;
 }
 
 .content {
-  font-family: "Cairo", sans-serif;
+  font-family: "Inknut Antiqua", serif;
   display: block;
+  font-size: 16px;
+  max-width: 600px;
   margin: 0 auto;
-}
-
-.toggleBar{
-  text-align: center;
-
+  margin-top: -60px;
 }
 
 .iconBar {
@@ -56,9 +52,10 @@ a {
 }
 
 .navigate-button {
-  margin-top: 20px; /* adjust as needed */
+  position: fixed;
+  top: 10px; /* adjust as needed */
+  right: 10px; /* adjust as needed */
 }
-
 .nanalan-img {
   width: 300px; /* adjust as needed */
   height: auto;

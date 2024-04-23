@@ -14,6 +14,14 @@ h1 {
   font-size: 35px;
 }
 
+
+h3 {
+  font-size: 25px;
+  color: pink;
+  font-weight: bold;
+  text-decoration: underline;
+}
+
 .content {
   font-family: "Cairo", sans-serif;
   display: block;
@@ -47,3 +55,27 @@ a {
   text-decoration: none;
 }
 
+.navigate-button {
+  margin-top: 20px; /* adjust as needed */
+}
+
+.nanalan-img {
+  width: 300px; /* adjust as needed */
+  height: auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.spinning-heart {
+  display: inline-block;
+  font-size: 50px; /* adjust as needed */
+  color: red; /* adjust as needed */
+  animation: spin 2s linear infinite;
+}
+
+.clear {
+  clear: both;
+}

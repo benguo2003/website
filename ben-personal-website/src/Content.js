@@ -3,10 +3,33 @@ import './App.css';
 import github from './images/github.png';
 import linkedin from './images/linkedin.png';
 import pdf from './images/pdf.png';
+import { AwesomeButton } from "react-awesome-button";
+import 'react-awesome-button/dist/styles.css';
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate} from 'react-router-dom';
+
+function NavigateButton() {
+    const navigate = useNavigate();
+
+    const navigateToBobaBolt = () => {
+        navigate('/bobabolt');
+    };
+
+    return (
+        <div className="navigate-button">
+        <AwesomeButton type="secondary" onPress={navigateToBobaBolt}>
+            CLICK ME
+        </AwesomeButton>
+        </div>
+    );
+}
 
 function Content( isDarkMode ) {
   return (
     <div className={isDarkMode ? 'dark-mode' : 'light-mode'}>
+        <header>
+            <h1>Ben Guo</h1>
+            <nav id="navigation"></nav>
+        </header>
         <div class="content">
             <p> 
                 Hey there! I'm Ben, a junior majoring in Computer Science <br/>
@@ -40,6 +63,7 @@ function Content( isDarkMode ) {
                 <img id="pdf" src={pdf} alt="pdf"/>
             </a>
         </div>
+        <NavigateButton />
     </div>
   );
 }

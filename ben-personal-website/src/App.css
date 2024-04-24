@@ -76,3 +76,18 @@ a {
 .clear {
   clear: both;
 }
+
+@media (max-width: 600px) {
+  .navigate-button {
+    margin-bottom: 20px; /* add space below the button */
+  }
+
+  .AwesomeButton {
+    font-size: 14px; /* make the button text smaller */
+  }
+
+  .content {
+    font-size: 14px; /* make the content text smaller */
+    padding: 0 20px; /* add padding on the left and right */
+  }
+}

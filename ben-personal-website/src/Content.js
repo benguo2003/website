@@ -13,8 +13,8 @@ function ModeButton({ isDarkMode, setIsDarkMode }) {
     };
 
     return (
-        <div className="navigate-button">
-            <AwesomeButton type="secondary" onPress={toggleMode}>
+        <div className="navigate-button" onClick={toggleMode}>
+            <AwesomeButton type="secondary">
                 {isDarkMode ? 'Light Mode' : 'Dark Mode'}
             </AwesomeButton>
         </div>

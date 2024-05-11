@@ -41,6 +41,7 @@ function Content() {
             {isIconClicked ? (
                 <div class="content">
                     <h1>I'm sorry bobabolt i lava you very very much</h1>
+                    <p> bobabolt rocks!!! </p>
                     <SvgIcon style={{fontSize: 100}}>
                         <VolunteerActivismIcon />
                     </SvgIcon>

@@ -29,6 +29,19 @@ h1 {
   margin-top: -60px;
 }
 
+.content button {
+  margin: 0 10px;
+  padding: 10px 20px;
+  font-size: 18px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.content button:hover {
+  opacity: 0.8;
+}
+
 .iconBar {
   display: block;
   margin: 0 auto;

@@ -27,6 +27,7 @@ function ModeButton({ isDarkMode, setIsDarkMode }) {
 function Content() {
     const [isDarkMode, setIsDarkMode] = useState(false);
     const [isIconClicked, setIconClicked] = useState(false);
+    const [selection, setSelection] = useState(null);
 
     const handleIconClick = () => {
         setIconClicked(!isIconClicked);
@@ -39,12 +40,12 @@ function Content() {
             </SvgIcon>
             <ModeButton isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode}/>
             {isIconClicked ? (
-                <div class="content">
-                    <h1>I'm sorry bobabolt i lava you very very much</h1>
-                    <p> bobabolt rocks!!! </p>
-                    <SvgIcon style={{fontSize: 100}}>
-                        <VolunteerActivismIcon />
-                    </SvgIcon>
+                <div className="content">
+                    <h1>I'm sorry!! Please accept my apology!! Select below:</h1>
+                    <button onClick={() => setSelection('yes')}>Yes</button>
+                    <button onClick={() => setSelection('no')}>No</button>
+                    {selection === 'yes' && <p>Hooray!</p>}
+                    {selection === 'no' && <p>WTF man</p>}
                 </div>
             ) : (
                 <>

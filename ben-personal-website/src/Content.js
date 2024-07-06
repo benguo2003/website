@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import './App.css';
 import github from './images/github.png';
 import linkedin from './images/linkedin.png';
+import bubba from './images/bubba.jpg';
+import lorikeet from './images/lorikeet.jpg';
 import pdf from './images/pdf.png';
 import { AwesomeButton } from "react-awesome-button";
 import 'react-awesome-button/dist/styles.css';
@@ -41,11 +43,11 @@ function Content() {
             <ModeButton isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode}/>
             {isIconClicked ? (
                 <div className="content">
-                    <h1>I'm sorry!! Please accept my apology!! Select below:</h1>
-                    <button onClick={() => setSelection('yes')}>Yes</button>
-                    <button onClick={() => setSelection('no')}>No</button>
-                    {selection === 'yes' && <p>Hooray!</p>}
-                    {selection === 'no' && <p>WTF man</p>}
+                    <h4>hai i lava u i sorry about what happened today here's a preview of tomorrow to make you happy</h4>
+                    <div className="image-container">
+                        <img src={lorikeet} alt="Lorikeet" />
+                        <img src={bubba} alt="Bubba" />
+                    </div>
                 </div>
             ) : (
                 <>

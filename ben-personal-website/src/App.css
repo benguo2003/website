@@ -20,6 +20,14 @@ h1 {
   font-style: normal;
 }
 
+h4 {
+  font-family: 'Cute Font', sans-serif;
+  font-size: 30px;
+  font-weight: 400;
+  font-style: normal;
+  margin-top: 200px;
+}
+
 .content {
   font-family: "Inknut Antiqua", serif;
   display: block;
@@ -88,6 +96,18 @@ a {
 
 .clear {
   clear: both;
+}
+
+.image-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.image-container img {
+  width: 300px;
+  margin-top: 20px;
 }
 
 @media (max-width: 600px) {

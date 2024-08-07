@@ -57,12 +57,12 @@ function Content() {
                     </header>
                     <div class="content">
                         <p> 
-                            Hey there! I'm Ben, a junior majoring in Computer Science
+                            Hey there! I'm Ben, a Senior majoring in Computer Science
                             at the University of California, Los Angeles.
                         </p> 
                         <p> 
-                            I'm looking forward to becoming a software engineer
-                            or a game developer after graduation.
+                            I'm currently interning at Fulgent Genetics and looking forward to becoming 
+                            a software engineer or a software developer after graduation.
                         </p> 
                         <p> 
                             You can find me at any of these platforms below,

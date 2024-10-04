@@ -6,6 +6,7 @@ import bubba from './images/bubba.jpg';
 import lorikeet from './images/lorikeet.jpg';
 import pdf from './images/pdf.png';
 import dumpling from './images/dumplings.jpg';
+import apology from './images/sorry.jpg';
 import { AwesomeButton } from "react-awesome-button";
 import 'react-awesome-button/dist/styles.css';
 import SvgIcon from '@material-ui/core/SvgIcon';
@@ -44,10 +45,11 @@ function Content() {
             <ModeButton isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode}/>
             {isIconClicked ? (
                 <div className="content">
-                    <h4>preview of luxious dumplings</h4>
+                    <h4>im sorry princess please forgive me!!!</h4>
                     <div className="image-container">
-                        <img src={dumpling} alt="Lorikeet" />
+                        <img src={apology} alt="Lorikeet" />
                     </div>
+                    <h4 className="reduced-top-margin">i won't be wishy washy anymore!!!</h4>
                 </div>
             ) : (
                 <>

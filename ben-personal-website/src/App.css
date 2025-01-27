@@ -128,3 +128,64 @@ a {
     padding: 0 20px; /* add padding on the left and right */
   }
 }
+
+.typing-effect {
+    overflow: hidden;
+    border-right: .15em solid #ff69b4;
+    white-space: nowrap;
+    animation: typing 3.5s steps(40, end), blink-caret .75s step-end infinite;
+}
+
+@keyframes typing {
+    from { width: 0 }
+    to { width: 100% }
+}
+
+@keyframes blink-caret {
+    from, to { border-color: transparent }
+    50% { border-color: #ff69b4; }
+}
+
+.heart-container {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.heart-icon {
+    transition: all 0.3s ease;
+}
+
+.heart-pulse {
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.image-bounce {
+    animation: bounce 0.5s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.sparkle-text {
+    background: linear-gradient(45deg, #ff69b4, #ff1493, #ff69b4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: sparkle 2s infinite;
+}
+
+.fade-in {
+    opacity: 0;
+    animation: fadeIn 2s forwards;
+}
+
+@keyframes fadeIn {
+    to { opacity: 1; }
+}

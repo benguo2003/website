@@ -31,10 +31,21 @@ function ModeButton({ isDarkMode, setIsDarkMode }) {
 function Content() {
     const [isDarkMode, setIsDarkMode] = useState(false);
     const [isIconClicked, setIconClicked] = useState(false);
-    const [selection, setSelection] = useState(null);
+    const [heartCount, setHeartCount] = useState(0);
+    const [showMessage, setShowMessage] = useState(false);
+    const [isHovering, setIsHovering] = useState(false);
 
     const handleIconClick = () => {
-        //setIconClicked(!isIconClicked);
+        setIconClicked(!isIconClicked);
+        setHeartCount(0);
+        setShowMessage(false);
+    };
+
+    const handleHeartClick = () => {
+        setHeartCount(prev => prev + 1);
+        if (heartCount >= 9) {
+            setShowMessage(true);
+        }
     };
 
     return (
@@ -45,11 +56,29 @@ function Content() {
             <ModeButton isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode}/>
             {isIconClicked ? (
                 <div className="content">
-                    <h4>im sorry princess please forgive me!!!</h4>
-                    <div className="image-container">
-                        <img src={apology} alt="Lorikeet" />
+                    <h4 className="typing-effect">IM SO SORRY GF PLZ FORGIVE ME 🥺</h4>
+                    <div className="heart-container">
+                        <VolunteerActivismIcon 
+                            className={`heart-icon ${heartCount > 0 ? 'heart-pulse' : ''}`}
+                            onClick={handleHeartClick}
+                            style={{ 
+                                color: '#ff69b4',
+                                cursor: 'pointer',
+                                fontSize: `${Math.min(40 + heartCount * 5, 80)}px`
+                            }}
+                        />
+                        <p className="heart-text">
+                            {heartCount < 10 
+                                ? `Click the heart to show your forgiveness! (${heartCount}/10)` 
+                                : "Thank you for forgiving me! 💕"}
+                        </p>
                     </div>
-                    <h4 className="reduced-top-margin">i won't be wishy washy anymore!!!</h4>
+                    {showMessage && (
+                        <div className="forgiveness-message">
+                            <h3 className="sparkle-text">OMG THANK YOU YAYAYAYAYAYA</h3>
+                            <p className="fade-in">UR NEXT CRAVING IS ON ME NO QUESTIONS ASKED</p>
+                        </div>
+                    )}
                 </div>
             ) : (
                 <>

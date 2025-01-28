@@ -88,7 +88,7 @@ const ChatComponent = () => {
     setIsLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:3001/api/chat', {
+      const response = await axios.post('https://ben-guo-website.onrender.com/api/chat', {
         messages: [...messages, newMessage]
       });
       

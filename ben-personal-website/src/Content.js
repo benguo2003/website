@@ -2,16 +2,12 @@ import React, { useState } from 'react';
 import './App.css';
 import github from './images/github.png';
 import linkedin from './images/linkedin.png';
-import bubba from './images/bubba.jpg';
-import lorikeet from './images/lorikeet.jpg';
 import pdf from './images/pdf.png';
-import dumpling from './images/dumplings.jpg';
-import apology from './images/sorry.jpg';
 import { AwesomeButton } from "react-awesome-button";
 import 'react-awesome-button/dist/styles.css';
-import SvgIcon from '@material-ui/core/SvgIcon';
-import { LocalFlorist } from '@material-ui/icons';
-import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
+import { SvgIcon } from '@mui/material';
+import { LocalFlorist } from '@mui/icons-material';
+import ChatComponent from './ChatComponent';
 
 function ModeButton({ isDarkMode, setIsDarkMode }) {
     const toggleMode = () => {
@@ -56,29 +52,8 @@ function Content() {
             <ModeButton isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode}/>
             {isIconClicked ? (
                 <div className="content">
-                    <h4 className="typing-effect">IM SO SORRY GF PLZ FORGIVE ME 🥺</h4>
-                    <div className="heart-container">
-                        <VolunteerActivismIcon 
-                            className={`heart-icon ${heartCount > 0 ? 'heart-pulse' : ''}`}
-                            onClick={handleHeartClick}
-                            style={{ 
-                                color: '#ff69b4',
-                                cursor: 'pointer',
-                                fontSize: `${Math.min(40 + heartCount * 5, 80)}px`
-                            }}
-                        />
-                        <p className="heart-text">
-                            {heartCount < 10 
-                                ? `Click the heart to show your forgiveness! (${heartCount}/10)` 
-                                : "Thank you for forgiving me! 💕"}
-                        </p>
-                    </div>
-                    {showMessage && (
-                        <div className="forgiveness-message">
-                            <h3 className="sparkle-text">OMG THANK YOU YAYAYAYAYAYA</h3>
-                            <p className="fade-in">UR NEXT CRAVING IS ON ME NO QUESTIONS ASKED</p>
-                        </div>
-                    )}
+                    <h4 className="typing-effect">Hey cutie! Need help with homework? 💕</h4>
+                    <ChatComponent />
                 </div>
             ) : (
                 <>
@@ -86,7 +61,7 @@ function Content() {
                         <h1>Ben Guo</h1>    
                         <nav id="navigation"></nav>
                     </header>
-                    <div class="content">
+                    <div className="content">
                         <p> 
                             Hey there! I'm Ben, currently working as a Software Engineer at Fulgent Genetics.
                         </p> 

@@ -134,6 +134,7 @@ a {
     border-right: .15em solid #ff69b4;
     white-space: nowrap;
     animation: typing 3.5s steps(40, end), blink-caret .75s step-end infinite;
+    margin-bottom: 2px;
 }
 
 @keyframes typing {

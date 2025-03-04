@@ -8,6 +8,7 @@ import 'react-awesome-button/dist/styles.css';
 import { SvgIcon } from '@mui/material';
 import { LocalFlorist } from '@mui/icons-material';
 import ChatComponent from './ChatComponent';
+import wizard from './images/wizard.png';
 
 function ModeButton({ isDarkMode, setIsDarkMode }) {
     const toggleMode = () => {
@@ -52,8 +53,17 @@ function Content() {
             <ModeButton isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode}/>
             {isIconClicked ? (
                 <div className="content">
-                    <h4 className="typing-effect">Hey cutie! Need help with homework? 💕</h4>
-                    <ChatComponent />
+                    <h4>me rn</h4>
+                    <img 
+                        src={wizard} 
+                        alt="wizard"
+                        style={{
+                            display: 'block',
+                            margin: '0 auto',
+                            maxWidth: '100%',
+                            height: 'auto'
+                        }}
+                    />
                 </div>
             ) : (
                 <>

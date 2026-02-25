@@ -1,259 +1,73 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import './App.css';
-import github from './images/github.png';
-import linkedin from './images/linkedin.png';
-import pdf from './images/pdf.png';
-import { AwesomeButton } from "react-awesome-button";
-import 'react-awesome-button/dist/styles.css';
-import { SvgIcon } from '@mui/material';
-import { LocalFlorist } from '@mui/icons-material';
-import ChatComponent from './ChatComponent';
-import wizard from './images/wizard.png';
-
-function NetflixClone() {
-    const [activeCategory, setActiveCategory] = useState(0);
-    const [hoveredMovie, setHoveredMovie] = useState(null);
-
-    const categories = ['Home', 'TV Shows', 'Movies', 'New & Popular', 'My List', 'Browse by Languages'];
-    
-    const movieRows = [
-        {
-            title: "Trending Now",
-            movies: [
-                { id: 1, title: "Stranger Things", image: "🎬", rating: "97% Match", year: "2023", desc: "When a young boy vanishes, a small town uncovers a mystery involving secret experiments." },
-                { id: 2, title: "The Crown", image: "👑", rating: "92% Match", year: "2023", desc: "Follows the political rivalries and romance of Queen Elizabeth II's reign." },
-                { id: 3, title: "Ozark", image: "💰", rating: "89% Match", year: "2023", desc: "A financial advisor drags his family from Chicago to the Missouri Ozarks." },
-                { id: 4, title: "Squid Game", image: "🦑", rating: "95% Match", year: "2024", desc: "Players compete in childhood games with deadly consequences for a massive cash prize." },
-                { id: 5, title: "Wednesday", image: "🖤", rating: "88% Match", year: "2024", desc: "Wednesday Addams navigates her years as a student at Nevermore Academy." }
-            ]
-        },
-        {
-            title: "Netflix Originals",
-            movies: [
-                { id: 6, title: "Black Mirror", image: "📱", rating: "91% Match", year: "2023", desc: "An anthology series exploring a twisted, high-tech multiverse." },
-                { id: 7, title: "The Witcher", image: "⚔️", rating: "86% Match", year: "2024", desc: "Geralt of Rivia, a solitary monster hunter, struggles to find his place." },
-                { id: 8, title: "Orange Is the New Black", image: "🧡", rating: "83% Match", year: "2023", desc: "A privileged New Yorker ends up in a women's prison." },
-                { id: 9, title: "House of Cards", image: "🏛️", rating: "94% Match", year: "2023", desc: "A Congressman works with his wife to exact revenge on those who betrayed him." },
-                { id: 10, title: "Narcos", image: "💊", rating: "90% Match", year: "2024", desc: "A chronicled look at the criminal exploits of Colombian drug lord Pablo Escobar." }
-            ]
-        },
-        {
-            title: "Action & Adventure",
-            movies: [
-                { id: 11, title: "Money Heist", image: "🎭", rating: "93% Match", year: "2024", desc: "An unusual group of robbers attempt to carry out the most perfect robbery." },
-                { id: 12, title: "Extraction", image: "💥", rating: "87% Match", year: "2023", desc: "A black-market mercenary has nothing to lose when his skills are solicited." },
-                { id: 13, title: "The Old Guard", image: "🛡️", rating: "85% Match", year: "2023", desc: "A covert team of immortal mercenaries are suddenly exposed." },
-                { id: 14, title: "6 Underground", image: "🚗", rating: "81% Match", year: "2023", desc: "Six individuals from all around the globe become the next generation of action heroes." },
-                { id: 15, title: "Bird Box", image: "👁️", rating: "88% Match", year: "2024", desc: "A woman and a pair of children are blindfolded and make their way through a dystopian setting." }
-            ]
-        }
-    ];
-
-    const featuredMovie = {
-        title: "Breaking Bad",
-        desc: "A high school chemistry teacher diagnosed with inoperable lung cancer turns to manufacturing and selling methamphetamine in order to secure his family's future.",
-        rating: "9.5/10",
-        year: "2024",
-        genre: "Crime Drama",
-        image: "🧪"
-    };
-
-    return (
-        <div className="netflix-clone">
-            {/* Netflix Header */}
-            <header className="netflix-header">
-                <div className="header-left">
-                    <div className="netflix-logo">NETFLIX</div>
-                    <nav className="main-nav">
-                        {categories.map((category, index) => (
-                            <span 
-                                key={category}
-                                className={`nav-item ${activeCategory === index ? 'active' : ''}`}
-                                onClick={() => setActiveCategory(index)}
-                            >
-                                {category}
-                            </span>
-                        ))}
-                    </nav>
-                </div>
-                <div className="header-right">
-                    <span className="search-icon">🔍</span>
-                    <span className="notifications">🔔</span>
-                    <div className="profile">
-                        <span className="avatar">👤</span>
-                        <span className="dropdown">▼</span>
-                    </div>
-                </div>
-            </header>
-
-            {/* Hero Banner */}
-            <section className="hero-banner">
-                <div className="hero-content">
-                    <div className="hero-movie-icon">{featuredMovie.image}</div>
-                    <h1 className="hero-title">{featuredMovie.title}</h1>
-                    <div className="hero-info">
-                        <span className="rating">{featuredMovie.rating}</span>
-                        <span className="year">{featuredMovie.year}</span>
-                        <span className="genre">{featuredMovie.genre}</span>
-                    </div>
-                    <p className="hero-description">{featuredMovie.desc}</p>
-                    <div className="hero-buttons">
-                        <button className="play-btn">▶ Play</button>
-                        <button className="info-btn">ℹ More Info</button>
-                    </div>
-                </div>
-                <div className="hero-gradient"></div>
-            </section>
-
-            {/* Movie Rows */}
-            <section className="movie-rows">
-                {movieRows.map((row, rowIndex) => (
-                    <div key={rowIndex} className="movie-row">
-                        <h2 className="row-title">{row.title}</h2>
-                        <div className="movies-container">
-                            <div className="movies-scroll">
-                                {row.movies.map((movie) => (
-                                    <div 
-                                        key={movie.id}
-                                        className="movie-card"
-                                        onMouseEnter={() => setHoveredMovie(movie.id)}
-                                        onMouseLeave={() => setHoveredMovie(null)}
-                                    >
-                                        <div className="movie-poster">
-                                            <span className="movie-emoji">{movie.image}</span>
-                                        </div>
-                                        {hoveredMovie === movie.id && (
-                                            <div className="movie-hover">
-                                                <div className="hover-content">
-                                                    <h3>{movie.title}</h3>
-                                                    <div className="movie-actions">
-                                                        <button className="play-hover">▶</button>
-                                                        <button className="add-hover">+</button>
-                                                        <button className="like-hover">👍</button>
-                                                        <button className="more-hover">⬇</button>
-                                                    </div>
-                                                    <div className="movie-meta">
-                                                        <span className="match">{movie.rating}</span>
-                                                        <span className="year">{movie.year}</span>
-                                                    </div>
-                                                    <p className="movie-desc">{movie.desc}</p>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                ))}
-            </section>
-
-            {/* Footer */}
-            <footer className="netflix-footer">
-                <div className="footer-content">
-                    <div className="social-links">
-                        <span>📘</span>
-                        <span>🐦</span>
-                        <span>📷</span>
-                        <span>📺</span>
-                    </div>
-                    <div className="footer-links">
-                        <div className="link-column">
-                            <a href="#">Audio Description</a>
-                            <a href="#">Investor Relations</a>
-                            <a href="#">Legal Notices</a>
-                        </div>
-                        <div className="link-column">
-                            <a href="#">Help Center</a>
-                            <a href="#">Jobs</a>
-                            <a href="#">Cookie Preferences</a>
-                        </div>
-                        <div className="link-column">
-                            <a href="#">Gift Cards</a>
-                            <a href="#">Terms of Use</a>
-                            <a href="#">Corporate Information</a>
-                        </div>
-                        <div className="link-column">
-                            <a href="#">Media Center</a>
-                            <a href="#">Privacy</a>
-                            <a href="#">Contact Us</a>
-                        </div>
-                    </div>
-                    <div className="service-code">
-                        <button>Service Code</button>
-                    </div>
-                    <div className="copyright">
-                        © 2024 Netflix Clone by Ben Guo
-                    </div>
-                </div>
-            </footer>
-        </div>
-    );
-}
-
-function ModeButton({ isDarkMode, setIsDarkMode }) {
-    const toggleMode = () => {
-        setIsDarkMode(!isDarkMode);
-        document.documentElement.className = !isDarkMode ? 'dark-mode' : 'light-mode';
-    };
-
-    return (
-        <div className="navigate-button" onClick={toggleMode}>
-            <AwesomeButton type="secondary">
-                {isDarkMode ? 'Light Mode' : 'Dark Mode'}
-            </AwesomeButton>
-        </div>
-    );
-}
 
 function Content() {
-    const [isDarkMode, setIsDarkMode] = useState(false);
-    const [isIconClicked, setIconClicked] = useState(false);
-    const [heartCount, setHeartCount] = useState(0);
-    const [showMessage, setShowMessage] = useState(false);
-    const [isHovering, setIsHovering] = useState(false);
-
-    const handleIconClick = () => {
-        setIconClicked(!isIconClicked);
-        setHeartCount(0);
-        setShowMessage(false);
-    };
-
-    const handleHeartClick = () => {
-        setHeartCount(prev => prev + 1);
-        if (heartCount >= 9) {
-            setShowMessage(true);
-        }
-    };
-
     return (
-        <div className={isDarkMode ? 'dark-mode' : 'light-mode'}>
-            <ModeButton isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode}/>
-            <header>
-                <h1>Ben Guo</h1>    
-                <nav id="navigation"></nav>
-            </header>
-            <div className="content">
-                <p> 
-                    Hey there! I'm Ben, currently working as a Software Engineer at Fulgent Genetics.
-                </p> 
-                <p> 
-                    You can find me at any of these platforms below,
-                    or check out my resume by clicking on the last icon.
-                    Also, feel free to reach out at junbinbenguo@gmail.com!
-                </p>  
-            </div>
-            <div className="iconBar">
-                <a href="https://www.github.com/benguo2003" target="_blank" rel="noopener noreferrer">
-                    <img id="github" src={github} alt="github"/>
-                </a>
-                <a href="https://www.linkedin.com/in/benguo2003/" target="_blank" rel="noopener noreferrer">
-                    <img id="linkedin" src={linkedin} alt="linkedin"/>
-                </a>
-                <a href={`${process.env.PUBLIC_URL}/Updated_Resume.pdf`} target="_blank" rel="noopener noreferrer">
-                    <img id="pdf" src={pdf} alt="pdf"/>
-                </a>
-            </div>
+        <div className="site">
+            {/* Ambient background glow */}
+            <div className="ambient-glow" />
+
+            <main className="main">
+                {/* Hero */}
+                <section className="hero">
+                    <p className="hero-greeting">Hey, I'm</p>
+                    <h1 className="hero-name">Ben Guo</h1>
+                    <p className="hero-title">Software Engineer at <a href="https://www.fulgentgenetics.com/" target="_blank" rel="noopener noreferrer" className="inline-link">Fulgent Genetics</a></p>
+                    <p className="hero-bio">
+                        Currently building a comprehensive image annotation web application designed for clinical pathologists. Feel free to reach out &mdash; I'd love to connect.
+                    </p>
+
+                    {/* Contact pill */}
+                    <a href="mailto:junbinbenguo@gmail.com" className="email-pill">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="2" y="4" width="20" height="16" rx="2"/>
+                            <path d="M22 7l-10 6L2 7"/>
+                        </svg>
+                        junbinbenguo@gmail.com
+                    </a>
+                </section>
+
+                {/* Links */}
+                <section className="links">
+                    <a href="https://www.github.com/benguo2003" target="_blank" rel="noopener noreferrer" className="link-card">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+                        </svg>
+                        <span className="link-label">GitHub</span>
+                        <svg className="link-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M7 17L17 7"/>
+                            <path d="M7 7h10v10"/>
+                        </svg>
+                    </a>
+
+                    <a href="https://www.linkedin.com/in/benguo2003/" target="_blank" rel="noopener noreferrer" className="link-card">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                        </svg>
+                        <span className="link-label">LinkedIn</span>
+                        <svg className="link-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M7 17L17 7"/>
+                            <path d="M7 7h10v10"/>
+                        </svg>
+                    </a>
+
+                    <a href={`${process.env.PUBLIC_URL}/Updated_Resume.pdf`} target="_blank" rel="noopener noreferrer" className="link-card">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                            <polyline points="10 9 9 9 8 9"/>
+                        </svg>
+                        <span className="link-label">Resume</span>
+                        <svg className="link-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M7 17L17 7"/>
+                            <path d="M7 7h10v10"/>
+                        </svg>
+                    </a>
+                </section>
+
+            </main>
         </div>
     );
 }

@@ -3,66 +3,131 @@ import styled from '@emotion/styled';
 import axios from 'axios';
 
 const ChatContainer = styled.div`
-  max-width: 800px; // Increased from 600px
-  width: 90%; // Added to make it responsive
-  margin: 20px auto;
-  padding: 20px;
-  background: rgba(255, 192, 203, 0.1);
-  border-radius: 15px;
-  box-shadow: 0 4px 6px rgba(255, 182, 193, 0.1);
+  max-width: 100%;
+  margin: 0 auto;
 `;
 
 const MessageContainer = styled.div`
-  height: 500px; // Increased from 400px
+  height: 400px;
   overflow-y: auto;
-  padding: 20px;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 10px;
-  margin-bottom: 20px;
+  padding: 16px;
+  background: #141414;
+  border: 1px solid #1f1f1f;
+  border-radius: 14px 14px 0 0;
 
-  /* Custom scrollbar styling */
   &::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
   }
-  
+
   &::-webkit-scrollbar-track {
-    background: #FFF0F5;
-    border-radius: 4px;
+    background: transparent;
   }
-  
+
   &::-webkit-scrollbar-thumb {
-    background: #FFB6C1;
-    border-radius: 4px;
+    background: #27272a;
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: #3f3f46;
   }
 `;
 
 const Message = styled.div`
-  margin: 10px 0;
-  padding: 12px 18px;
-  border-radius: 15px;
-  max-width: 85%; // Increased from 80%
-  line-height: 1.4;
+  margin: 8px 0;
+  padding: 10px 16px;
+  border-radius: 12px;
+  max-width: 85%;
+  line-height: 1.5;
+  font-size: 14px;
   word-wrap: break-word;
   ${props => props.isUser ? `
-    background: #FFB6C1;
+    background: linear-gradient(135deg, #818cf8, #a78bfa);
     margin-left: auto;
-    color: white;
+    color: #0a0a0a;
+    font-weight: 500;
   ` : `
-    background: #FFF0F5;
+    background: #1f1f1f;
     margin-right: auto;
-    color: #FF69B4;
+    color: #d4d4d8;
   `}
 `;
 
+const InputForm = styled.form`
+  display: flex;
+  gap: 0;
+`;
+
 const Input = styled.input`
-  width: 100%;
-  padding: 12px;
-  border: 2px solid #FFB6C1;
-  border-radius: 25px;
-  font-size: 16px;
+  flex: 1;
+  padding: 14px 18px;
+  border: 1px solid #1f1f1f;
+  border-top: none;
+  border-radius: 0 0 0 14px;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  background: #141414;
+  color: #e4e4e7;
+  outline: none;
+  transition: border-color 0.2s ease;
+
   &:focus {
-    outline: none;
-    border-color: #FF69B4;
+    border-color: #818cf8;
+  }
+
+  &::placeholder {
+    color: #52525b;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+  }
+`;
+
+const SendButton = styled.button`
+  padding: 14px 20px;
+  border: 1px solid #1f1f1f;
+  border-top: none;
+  border-left: none;
+  border-radius: 0 0 14px 0;
+  background: #141414;
+  color: #818cf8;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background: rgba(129, 140, 248, 0.1);
+    color: #a78bfa;
+  }
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+`;
+
+const TypingDots = styled.div`
+  display: flex;
+  gap: 4px;
+  padding: 12px 16px;
+
+  span {
+    width: 6px;
+    height: 6px;
+    background: #52525b;
+    border-radius: 50%;
+    animation: typing-bounce 1.4s ease-in-out infinite;
+  }
+
+  span:nth-of-type(2) { animation-delay: 0.2s; }
+  span:nth-of-type(3) { animation-delay: 0.4s; }
+
+  @keyframes typing-bounce {
+    0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+    40% { transform: translateY(-6px); opacity: 1; }
   }
 `;
 
@@ -91,10 +156,10 @@ const ChatComponent = () => {
       const response = await axios.post('https://ben-guo-website.onrender.com/api/chat', {
         messages: [...messages, newMessage]
       });
-      
       setMessages(prev => [...prev, response.data]);
     } catch (error) {
       console.error('Error:', error);
+      setMessages(prev => [...prev, { role: 'assistant', content: 'Something went wrong. Try again later.' }]);
     } finally {
       setIsLoading(false);
     }
@@ -103,22 +168,32 @@ const ChatComponent = () => {
   return (
     <ChatContainer>
       <MessageContainer>
+        {messages.length === 0 && (
+          <Message>Hi there! Ask me anything about Ben.</Message>
+        )}
         {messages.map((msg, idx) => (
           <Message key={idx} isUser={msg.role === 'user'}>
             {msg.content}
           </Message>
         ))}
-        {isLoading && <Message>Typing...</Message>}
+        {isLoading && (
+          <TypingDots>
+            <span /><span /><span />
+          </TypingDots>
+        )}
         <div ref={messagesEndRef} />
       </MessageContainer>
-      <form onSubmit={handleSend}>
+      <InputForm onSubmit={handleSend}>
         <Input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask me anything! 💕"
+          placeholder="Type a message..."
           disabled={isLoading}
         />
-      </form>
+        <SendButton type="submit" disabled={isLoading || !input.trim()}>
+          Send
+        </SendButton>
+      </InputForm>
     </ChatContainer>
   );
 };

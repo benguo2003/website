@@ -17,23 +17,6 @@
   overflow: hidden;
 }
 
-.ambient-glow {
-  position: fixed;
-  top: -40%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 800px;
-  height: 800px;
-  background: radial-gradient(
-    circle,
-    rgba(129, 140, 248, 0.08) 0%,
-    rgba(167, 139, 250, 0.04) 40%,
-    transparent 70%
-  );
-  pointer-events: none;
-  z-index: 0;
-}
-
 .main {
   position: relative;
   z-index: 1;
@@ -44,6 +27,12 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
+  pointer-events: none;
+}
+
+.main a,
+.main button {
+  pointer-events: auto;
 }
 
 /* --- Hero --- */

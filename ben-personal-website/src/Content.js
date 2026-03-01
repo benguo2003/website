@@ -1,11 +1,11 @@
 import React from 'react';
 import './App.css';
+import StarField from './StarField';
 
 function Content() {
     return (
         <div className="site">
-            {/* Ambient background glow */}
-            <div className="ambient-glow" />
+            <StarField />
 
             <main className="main">
                 {/* Hero */}
@@ -14,7 +14,7 @@ function Content() {
                     <h1 className="hero-name">Ben Guo</h1>
                     <p className="hero-title">Software Engineer at <a href="https://www.fulgentgenetics.com/" target="_blank" rel="noopener noreferrer" className="inline-link">Fulgent Genetics</a></p>
                     <p className="hero-bio">
-                        Currently building a comprehensive image annotation web application designed for clinical pathologists. Feel free to reach out &mdash; I'd love to connect.
+                        Currently building a comprehensive image annotation web application designed for clinical pathologists. Feel free to reach out - I'd love to connect!
                     </p>
 
                     {/* Contact pill */}

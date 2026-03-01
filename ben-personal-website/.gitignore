@@ -23,6 +23,7 @@
 # IDE/Editor specific
 .idea/
 .vscode/
+.claude/
 *.swp
 *.swo
 .DS_Store

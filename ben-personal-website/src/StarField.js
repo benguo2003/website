@@ -18,8 +18,6 @@ const WORMHOLE_THRESHOLD = 30;    // click-spawned stars before wormhole appears
 const WORMHOLE_RADIUS = 70;       // visual outer radius
 const WORMHOLE_HIT_RADIUS = 90;   // clickable area
 const WORMHOLE_URL = 'https://space-explorer-bay.vercel.app/';
-const WORMHOLE_LABEL = 'Space Explorer';
-
 // wormhole swirl particle pool
 const NUM_RING_PARTICLES = 120;
 const NUM_STREAM_PARTICLES = 60;

@@ -218,7 +218,13 @@ vec4 disk(float r, float phi, float dop) {
   float ufx = dFdx(uf), ufy = dFdy(uf);
   ux = abs(ufx) < abs(ux) ? ufx : ux;
   uy = abs(ufy) < abs(uy) ? ufy : uy;
-  vec2 rd = clamp(vec2(dFdx(r), dFdy(r)), -0.5, 0.5);
+  vec2 rd = vec2(dFdx(r), dFdy(r));
+  // Neighboring pixels can see different lensed images of the disk (e.g. where the
+  // faded front edge meets the lower arc). Those jumps aren't real gradients and would
+  // pick a far-too-blurry mip in 2x2 blocks — visible as dashed lines — so drop them.
+  rd *= step(abs(rd), vec2(1.0));
+  ux *= step(abs(ux), 0.08);
+  uy *= step(abs(uy), 0.08);
 
   // Keplerian shear, cross-faded between two resetting layers so it never winds up
   float omega = 2.4 * pow(r, -1.5);
@@ -228,10 +234,12 @@ vec4 disk(float r, float phi, float dop) {
   float w = abs(2.0 * f1 - 1.0);
   float s1 = omega * f1 * 14.0 / TAU;
   float s2 = omega * f2 * 14.0 / TAU;
-  vec2 dx1 = vec2((ux - dFdx(s1)) * KU, rd.x * KV);
-  vec2 dy1 = vec2((uy - dFdy(s1)) * KU, rd.y * KV);
-  vec2 dx2 = vec2((ux - dFdx(s2)) * KU, rd.x * KV);
-  vec2 dy2 = vec2((uy - dFdy(s2)) * KU, rd.y * KV);
+  // shear derivatives via the chain rule, so they inherit the cleaned-up radius derivative
+  float dsdr = -1.5 / r;
+  vec2 dx1 = vec2((ux - s1 * dsdr * rd.x) * KU, rd.x * KV);
+  vec2 dy1 = vec2((uy - s1 * dsdr * rd.y) * KU, rd.y * KV);
+  vec2 dx2 = vec2((ux - s2 * dsdr * rd.x) * KU, rd.x * KV);
+  vec2 dy2 = vec2((uy - s2 * dsdr * rd.y) * KU, rd.y * KV);
   vec2 uv1 = vec2((u - s1) * KU, r * KV);
   vec2 uv2 = vec2((u - s2) * KU, r * KV) + vec2(0.37, 0.61);
 

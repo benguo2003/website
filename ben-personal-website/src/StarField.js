@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useCallback } from 'react';
+import { createBlackHole, ASPECT as BH_ASPECT, SHADOW_FRAC } from './BlackHole';
 
 const CONNECTION_DIST = 150;
 const CONNECTION_DIST_SQ = CONNECTION_DIST * CONNECTION_DIST;
@@ -13,74 +14,195 @@ const COLORS = [
   '199, 210, 254',
 ];
 
-// ── Wormhole config ──
-const WORMHOLE_THRESHOLD = 30;    // click-spawned stars before wormhole appears
-const WORMHOLE_RADIUS = 70;       // visual outer radius
-const WORMHOLE_HIT_RADIUS = 90;   // clickable area
-const WORMHOLE_URL = 'https://space-explorer-bay.vercel.app/';
-// wormhole swirl particle pool
-const NUM_RING_PARTICLES = 120;
-const NUM_STREAM_PARTICLES = 60;
+// ── Black hole config ──
+const BLACK_HOLE_THRESHOLD = 30;  // click-spawned stars before the black hole appears
+const BLACK_HOLE_PREWARM = 12;    // start compiling the shader in the background at this count
+const BLACK_HOLE_URL = 'https://space-explorer-bay.vercel.app/';
+const BLACK_HOLE_FADE_MS = 3500;
+const CONTENT_WIDTH = 620;        // .main max-width in App.css
 
-function createRingParticle() {
-  const depth = Math.random();            // 0 = outer edge, 1 = center
-  const angle = Math.random() * TWO_PI;
-  const speed = 0.3 + depth * 1.2;       // inner particles orbit faster
-  const r = WORMHOLE_RADIUS * (1 - depth * 0.85); // radius from center
-  return { depth, angle, speed, r, phase: Math.random() * TWO_PI };
+// The visible disk spans ~VISIBLE_HALF of the canvas width either side of center
+// (the rest is fade-out margin), so placement keeps that much on screen.
+const VISIBLE_HALF = 0.44;
+
+// canvas size in CSS px, scaled to fit the margin beside the content column;
+// the disk is wide and flat, so the canvas is too
+function blackHoleSize(w) {
+  const gutter = Math.max(0, (w - CONTENT_WIDTH) / 2);
+  const bw = Math.round(Math.min(860, w * 0.92, Math.max(340, gutter * 1.45)));
+  return { bw, bh: Math.round(bw / BH_ASPECT) };
 }
 
-function createStreamParticle() {
-  return {
-    angle: Math.random() * TWO_PI,
-    dist: WORMHOLE_RADIUS * (1.5 + Math.random() * 2), // starts far out
-    speed: 0.4 + Math.random() * 0.8,
-    rotSpeed: 0.2 + Math.random() * 0.6,
-    size: 0.5 + Math.random() * 1.5,
-    alpha: 0.2 + Math.random() * 0.5,
-    color: Math.random() > 0.5 ? '129, 140, 248' : '167, 139, 250',
-  };
+// render at full Retina resolution when the light paths are precomputed;
+// the per-frame ray tracing fallback stays at 1x to keep it smooth
+function renderScale(renderer) {
+  return Math.min(window.devicePixelRatio || 1, renderer.baked ? 2 : 1);
+}
+
+// Page content the black hole / label must stay clear of. Text is measured per
+// line box (a paragraph's box spans the whole column even when its text doesn't);
+// pills and cards are measured as their full visible boxes.
+const TEXT_SELECTOR = '.main .hero > p, .main .hero > h1';
+const BOX_SELECTOR = '.main .email-pill, .main .link-card';
+const LABEL_CLEARANCE = 10;       // min px between the label and any text / screen edge
+const MIN_NARROW_HEIGHT = 110;    // smallest the black hole gets when squeezed above the text
+
+function contentRects() {
+  const range = document.createRange();
+  const rects = [];
+  document.querySelectorAll(TEXT_SELECTOR).forEach((el) => {
+    range.selectNodeContents(el);
+    rects.push(...range.getClientRects());
+  });
+  document.querySelectorAll(BOX_SELECTOR).forEach((el) => rects.push(el.getBoundingClientRect()));
+  return rects.filter((r) => r.width > 0 && r.height > 0);
+}
+
+// true when the box (with padding) is fully on screen and touches none of the rects
+function isClear(l, t, r, b, pad, w, h, rects) {
+  if (l - pad < 0 || r + pad > w || t - pad < 0 || b + pad > h) return false;
+  return rects.every((rc) => rc.right < l - pad || rc.left > r + pad || rc.bottom < t - pad || rc.top > b + pad);
+}
+
+// visible extent of the black hole (lensed arcs + bright disk) around its center
+function holeBox(x, y, bw, bh) {
+  return [x - bw * VISIBLE_HALF, y - bh * 0.31, x + bw * VISIBLE_HALF, y + bh * 0.31];
+}
+
+// Find a spot near the black hole where the label clears all page content and stays
+// on screen: below the lower arc first, then above, then beside, and as a last resort
+// over the lower arc itself. null = no spot (the label stays hidden).
+function findLabelSpot(hole, label, w, h) {
+  const lw = label.offsetWidth;
+  const lh = label.offsetHeight;
+  const rects = contentRects();
+  const cx = (x) => Math.max(lw / 2 + LABEL_CLEARANCE, Math.min(w - lw / 2 - LABEL_CLEARANCE, x));
+  const side = hole.w * VISIBLE_HALF + 8 + lw / 2;
+  const spots = [
+    ...[0.36, 0.3, 0.24].map((k) => ({ x: cx(hole.x), top: hole.y + hole.h * k })),
+    ...[0.36, 0.3].map((k) => ({ x: cx(hole.x), top: hole.y - hole.h * k - lh })),
+    { x: hole.x - side, top: hole.y - lh / 2 },
+    { x: hole.x + side, top: hole.y - lh / 2 },
+    ...[0.16, 0.1].map((k) => ({ x: cx(hole.x), top: hole.y + hole.h * k })),
+  ];
+  return spots.find(({ x, top }) => isClear(x - lw / 2, top, x + lw / 2, top + lh, LABEL_CLEARANCE, w, h, rects)) || null;
+}
+
+const NO_HOVER = typeof window !== 'undefined' && window.matchMedia
+  && window.matchMedia('(hover: none)').matches;
+
+function hitsBlackHole(hole, x, y) {
+  if (!hole || hole.fade < 0.5) return false;
+  const dx = (x - hole.x) / (hole.w * 0.36);
+  const dy = (y - hole.y) / (hole.h * 0.42);
+  return dx * dx + dy * dy < 1;
 }
 
 function StarField() {
   const canvasRef = useRef(null);
+  const bhCanvasRef = useRef(null);
+  const labelRef = useRef(null);
   const starsRef = useRef([]);
   const animRef = useRef(null);
   const sizeRef = useRef({ w: 0, h: 0 });
 
-  // wormhole state
+  // black hole state
   const starsCreatedRef = useRef(0);
-  const wormholeRef = useRef(null);
-  const wormholeHoveredRef = useRef(false);
+  const rendererRef = useRef(null);   // null = not created yet, false = WebGL unavailable
+  const holeRef = useRef(null);
+  const hoveredRef = useRef(false);
   const mouseRef = useRef({ x: -1, y: -1 });
-  const ringParticlesRef = useRef([]);
-  const streamParticlesRef = useRef([]);
 
-  const spawnWormhole = useCallback(() => {
-    if (wormholeRef.current) return;
-    const { w, h } = sizeRef.current;
-    // place in upper area, off to one side
-    const side = Math.random() > 0.5 ? 1 : -1;
-    const x = w / 2 + side * (w * 0.2 + Math.random() * w * 0.15);
-    const y = h * 0.18 + Math.random() * h * 0.2;
-    wormholeRef.current = {
-      x: Math.max(WORMHOLE_RADIUS + 20, Math.min(w - WORMHOLE_RADIUS - 20, x)),
-      y: Math.max(WORMHOLE_RADIUS + 20, Math.min(h - WORMHOLE_RADIUS - 20, y)),
-      born: Date.now(),
-      alpha: 0,
-    };
-    // init particle pools
-    ringParticlesRef.current = Array.from({ length: NUM_RING_PARTICLES }, createRingParticle);
-    streamParticlesRef.current = Array.from({ length: NUM_STREAM_PARTICLES }, createStreamParticle);
+  const ensureRenderer = useCallback(() => {
+    if (rendererRef.current === null && bhCanvasRef.current) {
+      rendererRef.current = createBlackHole(bhCanvasRef.current) || false;
+    }
+    return rendererRef.current || null;
   }, []);
+
+  // position the hover label clear of all text, or disable it if there's no room
+  const placeLabel = useCallback(() => {
+    const hole = holeRef.current;
+    const label = labelRef.current;
+    if (!hole || !label) return;
+    const spot = findLabelSpot(hole, label, sizeRef.current.w, sizeRef.current.h);
+    hole.labelFits = !!spot;
+    if (spot) {
+      label.style.left = `${spot.x}px`;
+      label.style.top = `${spot.top}px`;
+    }
+  }, []);
+
+  // size + place the black hole canvas in the margin beside the content column;
+  // side/fy keep its spot across resizes
+  const layoutBlackHole = useCallback(() => {
+    const hole = holeRef.current;
+    const c = bhCanvasRef.current;
+    if (!hole || !c) return;
+    const { w, h } = sizeRef.current;
+    let { bw, bh } = blackHoleSize(w);
+    const gutter = Math.max(0, (w - CONTENT_WIDTH) / 2);
+    if (gutter >= bw * VISIBLE_HALF) {
+      // hug the screen edge but never let the disk run off it
+      const fromEdge = Math.min(w / 2, bw * VISIBLE_HALF);
+      hole.x = hole.side > 0 ? w - fromEdge : fromEdge;
+      hole.y = Math.min(h - bh / 2, Math.max(bh / 2, hole.fy * h));
+    } else {
+      // No side margin (phones, narrow windows). Prefer centered above the first line
+      // of text, sized so the arcs plus the label fit; otherwise (e.g. landscape phones,
+      // where the text starts at the top) use the smallest size in the first corner
+      // that's clear of content.
+      const rects = contentRects();
+      const textTop = Math.min(h, ...rects.map((r) => r.top));
+      const lh = labelRef.current ? labelRef.current.offsetHeight : 30;
+      const fitted = Math.round(Math.min(bh, (textTop - lh - LABEL_CLEARANCE - 8) / 0.62));
+      const small = MIN_NARROW_HEIGHT;
+      const smallW = small * BH_ASPECT;
+      const top = (sz) => 4 + sz * 0.32;
+      const candidates = [
+        ...(fitted >= small ? [{ x: w / 2, y: top(fitted), sz: fitted }] : []),
+        { x: w / 2, y: top(small), sz: small },
+        { x: w - smallW * VISIBLE_HALF, y: top(small), sz: small },
+        { x: smallW * VISIBLE_HALF, y: top(small), sz: small },
+        { x: w - smallW * VISIBLE_HALF, y: h - top(small), sz: small },
+        { x: smallW * VISIBLE_HALF, y: h - top(small), sz: small },
+      ];
+      const pick = candidates.find(({ x, y, sz }) => {
+        const [l, t, r, b] = holeBox(x, y, sz * BH_ASPECT, sz);
+        return isClear(l, t, r, b, 0, w, h, rects);
+      }) || candidates[0];
+      bh = pick.sz;
+      bw = bh * BH_ASPECT;
+      hole.x = pick.x;
+      hole.y = pick.y;
+    }
+    hole.w = bw;
+    hole.h = bh;
+    hole.shadowR = (SHADOW_FRAC * bh) / 2;
+    c.style.width = `${bw}px`;
+    c.style.height = `${bh}px`;
+    c.style.transform = `translate(${hole.x - bw / 2}px, ${hole.y - bh / 2}px)`;
+    placeLabel();
+  }, [placeLabel]);
+
+  const spawnBlackHole = useCallback(() => {
+    if (holeRef.current || !ensureRenderer()) return;
+    holeRef.current = {
+      side: Math.random() > 0.5 ? 1 : -1,
+      fy: 0.14 + Math.random() * 0.1,
+      born: 0,        // set once the shader + precomputed light paths are ready
+      lastFrame: 0,
+      fade: 0,
+      hover: 0,
+      time: 0,
+      labelShown: false,
+      labelFits: false,
+    };
+    layoutBlackHole();
+  }, [ensureRenderer, layoutBlackHole]);
 
   const addStar = useCallback((x, y) => {
     const stars = starsRef.current;
-    starsCreatedRef.current++;
-
-    if (starsCreatedRef.current >= WORMHOLE_THRESHOLD && !wormholeRef.current) {
-      spawnWormhole();
-    }
 
     if (stars.length >= MAX_STARS) {
       const star = stars.shift();
@@ -106,7 +228,7 @@ function StarField() {
         born: Date.now(),
       });
     }
-  }, [spawnWormhole]);
+  }, []);
 
   const resize = useCallback(() => {
     const c = canvasRef.current;
@@ -119,245 +241,72 @@ function StarField() {
     sizeRef.current = { w, h };
     const ctx = c.getContext('2d');
     ctx.scale(dpr, dpr);
-  }, []);
+    layoutBlackHole();
+  }, [layoutBlackHole]);
 
-  // ── Draw the wormhole ──
-  const drawWormhole = useCallback((ctx, now) => {
-    const wh = wormholeRef.current;
-    if (!wh) return;
+  // ── Render the black hole + its pull on nearby stars ──
+  const updateBlackHole = useCallback((now) => {
+    const renderer = rendererRef.current;
+    if (!renderer) return;
+    const hole = holeRef.current;
 
-    const age = now - wh.born;
-    const fadeIn = Math.min(age / 2500, 1); // 2.5s fade
-    wh.alpha = fadeIn;
-    if (fadeIn <= 0) return;
+    if (renderer.failed()) {
+      holeRef.current = null;
+      bhCanvasRef.current.style.display = 'none';
+      if (labelRef.current) labelRef.current.classList.remove('visible');
+      return;
+    }
 
-    const hovered = wormholeHoveredRef.current;
-    const hoverIntensity = hovered ? 1.3 : 1;
-    const cx = wh.x;
-    const cy = wh.y;
-    const t = now * 0.001; // time in seconds
+    // keep compiling / precomputing in small per-frame slices, starting at prewarm
+    // (the size only depends on the window, so this is done before the black hole exists)
+    const { bw, bh } = hole ? { bw: hole.w, bh: hole.h } : blackHoleSize(sizeRef.current.w);
+    const scale = renderScale(renderer);
+    renderer.setSize(Math.round(bw * scale), Math.round(bh * scale));
+    const ready = renderer.step(!!(hole && hole.born));
+    if (!hole || !ready) return;
 
-    ctx.save();
+    if (!hole.born) {
+      hole.born = now;
+      hole.lastFrame = now;
+      bhCanvasRef.current.style.display = 'block';
+    }
 
-    // ── 1. Gravitational lensing: pull nearby stars ──
+    const dt = Math.min(now - hole.lastFrame, 100);
+    hole.lastFrame = now;
+
+    const t = Math.min((now - hole.born) / BLACK_HOLE_FADE_MS, 1);
+    hole.fade = t * t * (3 - 2 * t);
+    hole.hover += ((hoveredRef.current ? 1 : 0) - hole.hover) * Math.min(1, dt / 220);
+    hole.time += (dt / 1000) * (1 + 2.2 * hole.hover);   // disk spins up on hover
+    renderer.render(hole.time, hole.fade, hole.hover);
+
+    const showLabel = hole.labelFits && hole.fade > 0.6 && (hoveredRef.current || NO_HOVER);
+    if (showLabel !== hole.labelShown && labelRef.current) {
+      labelRef.current.classList.toggle('visible', showLabel);
+      hole.labelShown = showLabel;
+    }
+
+    // gravity: pull nearby stars in (much harder on hover), swallow ones that cross the shadow
     const stars = starsRef.current;
-    const gravRange = WORMHOLE_RADIUS * 4;
+    const gravRange = hole.w * (0.45 + 0.25 * hole.hover);
     const gravRangeSq = gravRange * gravRange;
-    for (let i = 0; i < stars.length; i++) {
+    const swallowSq = hole.shadowR * hole.shadowR * 0.8;
+    const pull = hole.fade * (0.15 + 1.2 * hole.hover);
+    for (let i = stars.length - 1; i >= 0; i--) {
       const s = stars[i];
-      const dx = cx - s.x;
-      const dy = cy - s.y;
+      const dx = hole.x - s.x;
+      const dy = hole.y - s.y;
       const distSq = dx * dx + dy * dy;
-      if (distSq < gravRangeSq && distSq > 400) {
+      if (distSq < swallowSq) {
+        stars.splice(i, 1);
+      } else if (distSq < gravRangeSq) {
         const dist = Math.sqrt(distSq);
-        const force = (fadeIn * 0.15) / (dist * 0.05);
-        s.vx += (dx / dist) * force * 0.001;
-        s.vy += (dy / dist) * force * 0.001;
+        const force = pull / (dist * 0.05);
+        // radial pull plus a tangential nudge so stars spiral in rather than fall straight
+        s.vx += ((dx - dy * 0.6 * hole.hover) / dist) * force * 0.001;
+        s.vy += ((dy + dx * 0.6 * hole.hover) / dist) * force * 0.001;
       }
     }
-
-    // ── 2. Outer ambient glow ──
-    const outerGlowR = WORMHOLE_RADIUS * 3 * hoverIntensity;
-    const outerGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, outerGlowR);
-    outerGrad.addColorStop(0, `rgba(129, 140, 248, ${0.08 * fadeIn * hoverIntensity})`);
-    outerGrad.addColorStop(0.4, `rgba(167, 139, 250, ${0.04 * fadeIn})`);
-    outerGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-    ctx.beginPath();
-    ctx.arc(cx, cy, outerGlowR, 0, TWO_PI);
-    ctx.fillStyle = outerGrad;
-    ctx.fill();
-
-    // ── 3. Accretion disk (tilted ellipse) ──
-    const tilt = 0.35; // perspective tilt
-    const diskPulse = 1 + Math.sin(t * 1.5) * 0.05;
-    for (let ring = 5; ring >= 0; ring--) {
-      const ringFrac = ring / 5;
-      const rOuter = WORMHOLE_RADIUS * (0.6 + ringFrac * 0.8) * diskPulse * hoverIntensity;
-      const rInner = rOuter - 3;
-      const rotation = t * (0.3 + ringFrac * 0.2);
-
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(rotation);
-      ctx.scale(1, tilt);
-
-      const alpha = (0.06 + ringFrac * 0.04) * fadeIn * hoverIntensity;
-      const hue = ringFrac > 0.5 ? '167, 139, 250' : '129, 140, 248';
-      ctx.beginPath();
-      ctx.arc(0, 0, rOuter, 0, TWO_PI);
-      if (rInner > 0) {
-        ctx.arc(0, 0, rInner, 0, TWO_PI, true);
-      }
-      ctx.fillStyle = `rgba(${hue}, ${alpha})`;
-      ctx.fill();
-
-      ctx.restore();
-    }
-
-    // ── 4. Vortex tunnel rings (concentric ellipses at depth) ──
-    const numRings = 12;
-    for (let i = 0; i < numRings; i++) {
-      const depth = i / numRings;
-      const r = WORMHOLE_RADIUS * (1 - depth * 0.9) * fadeIn * hoverIntensity;
-      const ringTilt = tilt + depth * 0.15;
-      const rotation = t * (0.5 + depth * 2) * (i % 2 === 0 ? 1 : -1);
-      const alpha = (0.04 + depth * 0.08) * fadeIn * hoverIntensity;
-
-      // color shifts from indigo (outer) to cyan (inner)
-      const cr = Math.round(129 - depth * 80);
-      const cg = Math.round(140 + depth * 80);
-      const cb = Math.round(248 + depth * 7);
-
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(rotation);
-      ctx.scale(1, ringTilt);
-
-      ctx.beginPath();
-      ctx.arc(0, 0, r, 0, TWO_PI);
-      ctx.strokeStyle = `rgba(${cr}, ${cg}, ${cb}, ${alpha})`;
-      ctx.lineWidth = 1 + depth * 1.5;
-      ctx.stroke();
-
-      ctx.restore();
-    }
-
-    // ── 5. Ring particles (orbiting at different depths) ──
-    const ringParts = ringParticlesRef.current;
-    for (let i = 0; i < ringParts.length; i++) {
-      const p = ringParts[i];
-      p.angle += p.speed * 0.016; // ~60fps
-
-      const wobble = Math.sin(t * 2 + p.phase) * 0.1;
-      const currentR = p.r * (1 + wobble) * fadeIn * hoverIntensity;
-      const perspTilt = tilt + p.depth * 0.15;
-
-      const px = cx + Math.cos(p.angle) * currentR;
-      const py = cy + Math.sin(p.angle) * currentR * perspTilt;
-
-      // skip if behind the "disk" (simple z-sort via sin)
-      const z = Math.sin(p.angle);
-      if (z < -0.2 && p.depth > 0.3) continue;
-
-      const alpha = (0.15 + p.depth * 0.5) * fadeIn * (0.6 + z * 0.4) * hoverIntensity;
-      const size = (0.5 + p.depth * 1.5) * fadeIn;
-
-      // color: outer is indigo, inner is bright cyan/white
-      const cr = Math.round(129 + p.depth * 126);
-      const cg = Math.round(140 + p.depth * 115);
-      const cb = 248;
-
-      // particle glow
-      const glowR = size * 4;
-      const pGrad = ctx.createRadialGradient(px, py, 0, px, py, glowR);
-      pGrad.addColorStop(0, `rgba(${cr}, ${cg}, ${cb}, ${alpha * 0.6})`);
-      pGrad.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.beginPath();
-      ctx.arc(px, py, glowR, 0, TWO_PI);
-      ctx.fillStyle = pGrad;
-      ctx.fill();
-
-      // particle core
-      ctx.beginPath();
-      ctx.arc(px, py, size, 0, TWO_PI);
-      ctx.fillStyle = `rgba(${cr}, ${cg}, ${cb}, ${alpha})`;
-      ctx.fill();
-    }
-
-    // ── 6. Stream particles (spiraling inward from far away) ──
-    const streamParts = streamParticlesRef.current;
-    for (let i = 0; i < streamParts.length; i++) {
-      const sp = streamParts[i];
-      sp.dist -= sp.speed * 0.3;
-      sp.angle += sp.rotSpeed * 0.016;
-
-      // respawn when reaching center
-      if (sp.dist < 8) {
-        sp.dist = WORMHOLE_RADIUS * (1.5 + Math.random() * 2);
-        sp.angle = Math.random() * TWO_PI;
-      }
-
-      const spx = cx + Math.cos(sp.angle) * sp.dist * fadeIn;
-      const spy = cy + Math.sin(sp.angle) * sp.dist * fadeIn * 0.5; // flatten for perspective
-
-      const distFrac = 1 - sp.dist / (WORMHOLE_RADIUS * 3.5);
-      const alpha = sp.alpha * fadeIn * Math.max(0, distFrac) * hoverIntensity;
-
-      if (alpha < 0.01) continue;
-
-      // trail line toward center
-      const trailLen = 8 + distFrac * 12;
-      const angleToCenter = Math.atan2(cy - spy, cx - spx);
-      const tx = spx - Math.cos(angleToCenter) * trailLen;
-      const ty = spy - Math.sin(angleToCenter) * trailLen;
-
-      ctx.beginPath();
-      ctx.moveTo(spx, spy);
-      ctx.lineTo(tx, ty);
-      ctx.strokeStyle = `rgba(${sp.color}, ${alpha * 0.4})`;
-      ctx.lineWidth = sp.size * 0.5;
-      ctx.stroke();
-
-      // particle dot
-      ctx.beginPath();
-      ctx.arc(spx, spy, sp.size * fadeIn, 0, TWO_PI);
-      ctx.fillStyle = `rgba(${sp.color}, ${alpha})`;
-      ctx.fill();
-    }
-
-    // ── 7. Event horizon (dark center with bright rim) ──
-    const coreR = WORMHOLE_RADIUS * 0.18 * fadeIn * hoverIntensity;
-
-    // bright rim glow
-    const rimGlowR = coreR * 4;
-    const rimGrad = ctx.createRadialGradient(cx, cy, coreR * 0.5, cx, cy, rimGlowR);
-    rimGrad.addColorStop(0, `rgba(200, 210, 255, ${0.15 * fadeIn * hoverIntensity})`);
-    rimGrad.addColorStop(0.3, `rgba(129, 140, 248, ${0.1 * fadeIn})`);
-    rimGrad.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.beginPath();
-    ctx.arc(cx, cy, rimGlowR, 0, TWO_PI);
-    ctx.fillStyle = rimGrad;
-    ctx.fill();
-
-    // dark core
-    const coreGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, coreR);
-    coreGrad.addColorStop(0, `rgba(5, 5, 15, ${0.95 * fadeIn})`);
-    coreGrad.addColorStop(0.7, `rgba(10, 10, 30, ${0.8 * fadeIn})`);
-    coreGrad.addColorStop(1, `rgba(129, 140, 248, ${0.3 * fadeIn})`);
-    ctx.beginPath();
-    ctx.arc(cx, cy, coreR, 0, TWO_PI);
-    ctx.fillStyle = coreGrad;
-    ctx.fill();
-
-    // inner bright ring
-    ctx.beginPath();
-    ctx.arc(cx, cy, coreR, 0, TWO_PI);
-    ctx.strokeStyle = `rgba(199, 210, 254, ${0.4 * fadeIn * hoverIntensity})`;
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-
-    // ── 8. Spiral arms ──
-    const numArms = 3;
-    for (let arm = 0; arm < numArms; arm++) {
-      const baseAngle = (TWO_PI / numArms) * arm + t * 0.4;
-      ctx.beginPath();
-      let started = false;
-      for (let step = 0; step < 80; step++) {
-        const frac = step / 80;
-        const angle = baseAngle + frac * Math.PI * 3; // 1.5 full turns
-        const r = WORMHOLE_RADIUS * (0.2 + frac * 1.3) * fadeIn * hoverIntensity;
-        const px = cx + Math.cos(angle) * r;
-        const py = cy + Math.sin(angle) * r * (tilt + frac * 0.2);
-        if (!started) { ctx.moveTo(px, py); started = true; }
-        else ctx.lineTo(px, py);
-      }
-      const armAlpha = 0.06 * fadeIn * hoverIntensity;
-      ctx.strokeStyle = `rgba(167, 139, 250, ${armAlpha})`;
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    }
-
-    ctx.restore();
   }, []);
 
   const draw = useCallback(() => {
@@ -429,31 +378,20 @@ function StarField() {
       star.y += star.vy;
     }
 
-    // draw wormhole on top
-    drawWormhole(ctx, now);
+    // black hole renders on its own WebGL canvas layered above this one
+    updateBlackHole(now);
 
-    // update hover state
-    const wh = wormholeRef.current;
-    if (wh && wh.alpha > 0.5) {
-      const mx = mouseRef.current.x;
-      const my = mouseRef.current.y;
-      const dx = wh.x - mx;
-      const dy = wh.y - my;
-      wormholeHoveredRef.current = dx * dx + dy * dy < WORMHOLE_HIT_RADIUS * WORMHOLE_HIT_RADIUS;
-    } else {
-      wormholeHoveredRef.current = false;
-    }
-
-    if (canvasRef.current) {
-      canvasRef.current.style.cursor = wormholeHoveredRef.current ? 'pointer' : 'crosshair';
-    }
+    hoveredRef.current = hitsBlackHole(holeRef.current, mouseRef.current.x, mouseRef.current.y);
+    c.style.cursor = hoveredRef.current ? 'pointer' : 'crosshair';
 
     animRef.current = requestAnimationFrame(draw);
-  }, [drawWormhole]);
+  }, [updateBlackHole]);
 
   useEffect(() => {
     resize();
     window.addEventListener('resize', resize);
+    // the text scrolls but the label is fixed, so re-check for collisions
+    window.addEventListener('scroll', placeLabel, { passive: true });
     animRef.current = requestAnimationFrame(draw);
 
     const w = window.innerWidth;
@@ -461,26 +399,23 @@ function StarField() {
     for (let i = 0; i < 12; i++) {
       addStar(Math.random() * w, Math.random() * h);
     }
-    starsCreatedRef.current = 0; // don't count seed stars
 
     return () => {
       window.removeEventListener('resize', resize);
+      window.removeEventListener('scroll', placeLabel);
       cancelAnimationFrame(animRef.current);
+      if (rendererRef.current) rendererRef.current.dispose();
+      rendererRef.current = null;
+      holeRef.current = null;
     };
-  }, [resize, draw, addStar]);
+  }, [resize, draw, addStar, placeLabel]);
 
   const handleClick = (e) => {
     if (e.target.closest('a, button')) return;
 
-    // check wormhole click
-    const wh = wormholeRef.current;
-    if (wh && wh.alpha > 0.5) {
-      const dx = wh.x - e.clientX;
-      const dy = wh.y - e.clientY;
-      if (dx * dx + dy * dy < WORMHOLE_HIT_RADIUS * WORMHOLE_HIT_RADIUS) {
-        window.open(WORMHOLE_URL, '_blank', 'noopener,noreferrer');
-        return;
-      }
+    if (hitsBlackHole(holeRef.current, e.clientX, e.clientY)) {
+      window.open(BLACK_HOLE_URL, '_blank', 'noopener,noreferrer');
+      return;
     }
 
     const count = 2 + ((Math.random() * 3) | 0);
@@ -490,6 +425,16 @@ function StarField() {
         e.clientY + (Math.random() - 0.5) * 40
       );
     }
+
+    const prev = starsCreatedRef.current;
+    const created = prev + count;
+    starsCreatedRef.current = created;
+    // compile the shader during idle time well before it's needed, so the reveal never hitches
+    if (prev < BLACK_HOLE_PREWARM && created >= BLACK_HOLE_PREWARM) {
+      const idle = window.requestIdleCallback || ((fn) => setTimeout(fn, 200));
+      idle(ensureRenderer);
+    }
+    if (created >= BLACK_HOLE_THRESHOLD) spawnBlackHole();
   };
 
   const handleMouseMove = (e) => {
@@ -497,20 +442,42 @@ function StarField() {
   };
 
   return (
-    <canvas
-      ref={canvasRef}
-      onClick={handleClick}
-      onMouseMove={handleMouseMove}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        width: '100%',
-        height: '100%',
-        zIndex: 0,
-        pointerEvents: 'auto',
-        cursor: 'crosshair',
-      }}
-    />
+    <>
+      <canvas
+        ref={canvasRef}
+        onClick={handleClick}
+        onMouseMove={handleMouseMove}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: 0,
+          pointerEvents: 'auto',
+          cursor: 'crosshair',
+        }}
+      />
+      <canvas
+        ref={bhCanvasRef}
+        width={1}
+        height={1}
+        style={{
+          position: 'fixed',
+          left: 0,
+          top: 0,
+          zIndex: 0,
+          display: 'none',
+          pointerEvents: 'none',
+        }}
+      />
+      <div ref={labelRef} className="bh-label" aria-hidden="true">
+        Enter Space Explorer
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M7 17L17 7"/>
+          <path d="M7 7h10v10"/>
+        </svg>
+      </div>
+    </>
   );
 }
 

@@ -166,6 +166,35 @@
   flex-shrink: 0;
 }
 
+/* --- Black hole hover label --- */
+.bh-label {
+  position: fixed;
+  z-index: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 196, 140, 0.25);
+  background: rgba(10, 10, 10, 0.55);
+  color: #fde6cf;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  box-shadow: 0 0 24px rgba(255, 150, 70, 0.18);
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, 6px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.bh-label.visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
 /* --- Responsive --- */
 @media (max-width: 640px) {
   .main {
@@ -178,5 +207,15 @@
 
   .hero-name {
     font-size: 36px;
+  }
+}
+
+/* compact label where space is tight (phones, landscape phones) */
+@media (max-width: 640px), (max-height: 500px) {
+  .bh-label {
+    gap: 4px;
+    padding: 4px 10px;
+    font-size: 10px;
+    letter-spacing: 1px;
   }
 }

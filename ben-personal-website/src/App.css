@@ -65,14 +65,29 @@
   line-height: 1.5;
 }
 
+/* underline draws in left→right on hover, and exits to the right on leave */
 .inline-link {
   color: #818cf8;
   text-decoration: none;
-  transition: color 0.2s ease;
+  padding-bottom: 2px;
+  background-image: linear-gradient(90deg, #818cf8, #a78bfa);
+  background-repeat: no-repeat;
+  background-size: 0% 1.5px;
+  background-position: 100% 100%;
+  transition: color 0.2s ease, background-size 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.inline-link:hover {
+.inline-link:hover,
+.inline-link:focus-visible {
   color: #a78bfa;
+  background-size: 100% 1.5px;
+  background-position: 0 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .inline-link {
+    transition: color 0.2s ease;
+  }
 }
 
 .hero-bio {
@@ -193,6 +208,118 @@
 .bh-label.visible {
   opacity: 1;
   transform: translate(-50%, 0);
+}
+
+/* --- Custom cursor (mouse devices only; StarField adds .custom-cursor) --- */
+.custom-cursor,
+.custom-cursor * {
+  cursor: none !important;
+}
+
+/* one element pinned to the pointer; children are centered on the hotspot */
+.cursor {
+  display: none;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 10;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  will-change: transform;
+}
+
+.custom-cursor .cursor {
+  display: block;
+}
+
+.cursor.visible {
+  opacity: 1;
+}
+
+.cursor-star,
+.cursor-ring,
+.cursor-ripple {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 50%;
+}
+
+/* sparkle: dark-outlined so it reads on white text and bright backgrounds alike */
+.cursor-star {
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  color: #f4f5ff;
+  filter: drop-shadow(0 0 4px rgba(129, 140, 248, 0.9));
+  transition: color 0.25s ease, filter 0.25s ease;
+}
+
+.cursor-star svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  animation: cursor-twinkle 2.6s ease-in-out infinite;
+}
+
+/* state ring: hidden at rest, appears on links and the black hole */
+.cursor-ring {
+  width: 34px;
+  height: 34px;
+  margin: -17px 0 0 -17px;
+  opacity: 0;
+  transform: scale(0.4);
+  transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.cursor[data-state='link'] .cursor-ring {
+  opacity: 1;
+  transform: scale(1);
+  border: 1.5px solid #a78bfa;
+  background: rgba(129, 140, 248, 0.12);
+  box-shadow: 0 0 0 1.5px rgba(10, 10, 10, 0.7);
+}
+
+/* black hole: warm-white sparkle and a steady gold ring, both on dark backing so
+   they stay visible on top of the bright disk */
+.cursor[data-state='hole'] .cursor-star {
+  color: #fff7ee;
+  filter: drop-shadow(0 0 3px rgba(255, 150, 60, 1)) drop-shadow(0 0 9px rgba(255, 120, 40, 0.7));
+}
+
+.cursor[data-state='hole'] .cursor-ring {
+  width: 40px;
+  height: 40px;
+  margin: -20px 0 0 -20px;
+  opacity: 1;
+  transform: scale(1);
+  border: 2px solid #ffc58a;
+  background: rgba(10, 10, 10, 0.25);
+  box-shadow: 0 0 0 2px rgba(10, 10, 10, 0.6), inset 0 0 0 2px rgba(10, 10, 10, 0.45),
+    0 0 14px 2px rgba(255, 140, 50, 0.55);
+}
+
+/* click ripple, driven from JS */
+.cursor-ripple {
+  width: 36px;
+  height: 36px;
+  margin: -18px 0 0 -18px;
+  border: 1.5px solid #c7d2fe;
+  box-shadow: 0 0 10px rgba(129, 140, 248, 0.6);
+  opacity: 0;
+}
+
+@keyframes cursor-twinkle {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(0.82) rotate(45deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cursor-star svg {
+    animation: none;
+  }
 }
 
 /* --- Responsive --- */

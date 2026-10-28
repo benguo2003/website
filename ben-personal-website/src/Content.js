@@ -51,7 +51,7 @@ function Content() {
                         </svg>
                     </a>
 
-                    <a href={`${process.env.PUBLIC_URL}/Updated_Resume.pdf`} target="_blank" rel="noopener noreferrer" className="link-card">
+                    <a href={`${process.env.PUBLIC_URL}/Ben_Guo_Resume.pdf`} target="_blank" rel="noopener noreferrer" className="link-card">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
                             <polyline points="14 2 14 8 20 8"/>

@@ -88,8 +88,14 @@ function findLabelSpot(hole, label, w, h) {
   return spots.find(({ x, top }) => isClear(x - lw / 2, top, x + lw / 2, top + lh, LABEL_CLEARANCE, w, h, rects)) || null;
 }
 
-const NO_HOVER = typeof window !== 'undefined' && window.matchMedia
-  && window.matchMedia('(hover: none)').matches;
+const media = (q) => typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia(q).matches;
+const NO_HOVER = media('(hover: none)');
+// custom cursor only where there's a real mouse
+const FINE_POINTER = media('(hover: hover) and (pointer: fine)');
+const REDUCED_MOTION = media('(prefers-reduced-motion: reduce)');
+
+// four-point sparkle
+const SPARKLE_PATH = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8 7.2 12.8 0 12C7.2 11.2 11.2 7.2 12 0Z';
 
 function hitsBlackHole(hole, x, y) {
   if (!hole || hole.fade < 0.5) return false;
@@ -112,6 +118,19 @@ function StarField() {
   const holeRef = useRef(null);
   const hoveredRef = useRef(false);
   const mouseRef = useRef({ x: -1, y: -1 });
+
+  // custom cursor: one element pinned to the pointer (sparkle + state ring + click ripple)
+  const cursorElRef = useRef(null);
+  const rippleRef = useRef(null);
+  const cursorRef = useRef({ visible: false, overLink: false, state: '' });
+
+  const setCursorState = useCallback((state) => {
+    const cur = cursorRef.current;
+    if (state !== cur.state && cursorElRef.current) {
+      cursorElRef.current.dataset.state = state;
+      cur.state = state;
+    }
+  }, []);
 
   const ensureRenderer = useCallback(() => {
     if (rendererRef.current === null && bhCanvasRef.current) {
@@ -381,11 +400,14 @@ function StarField() {
     // black hole renders on its own WebGL canvas layered above this one
     updateBlackHole(now);
 
-    hoveredRef.current = hitsBlackHole(holeRef.current, mouseRef.current.x, mouseRef.current.y);
-    c.style.cursor = hoveredRef.current ? 'pointer' : 'crosshair';
+    const cur = cursorRef.current;
+    hoveredRef.current = !cur.overLink && hitsBlackHole(holeRef.current, mouseRef.current.x, mouseRef.current.y);
+    c.style.cursor = hoveredRef.current ? 'pointer' : 'crosshair';   // used only without the custom cursor
+
+    if (cur.visible) setCursorState(hoveredRef.current ? 'hole' : cur.overLink ? 'link' : 'idle');
 
     animRef.current = requestAnimationFrame(draw);
-  }, [updateBlackHole]);
+  }, [updateBlackHole, setCursorState]);
 
   useEffect(() => {
     resize();
@@ -437,16 +459,66 @@ function StarField() {
     if (created >= BLACK_HOLE_THRESHOLD) spawnBlackHole();
   };
 
-  const handleMouseMove = (e) => {
-    mouseRef.current = { x: e.clientX, y: e.clientY };
-  };
+  // pointer tracking lives on window so it keeps working over links and text
+  useEffect(() => {
+    const onMove = (e) => {
+      mouseRef.current = { x: e.clientX, y: e.clientY };
+      const cur = cursorRef.current;
+      cur.overLink = !!(e.target.closest && e.target.closest('a, button'));
+      const el = cursorElRef.current;
+      if (!FINE_POINTER || !el) return;
+      // moved in the event itself (not on the next animation frame) so it never lags
+      el.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0)`;
+      if (cur.overLink) setCursorState('link');
+      if (!cur.visible) {
+        cur.visible = true;
+        el.classList.add('visible');
+      }
+    };
+    const onLeave = () => {
+      if (!cursorRef.current.visible) return;
+      cursorRef.current.visible = false;
+      mouseRef.current = { x: -1, y: -1 };
+      if (cursorElRef.current) cursorElRef.current.classList.remove('visible');
+    };
+    // click feedback: the sparkle flares and a ripple expands from the pointer
+    const onDown = () => {
+      if (!FINE_POINTER || REDUCED_MOTION || !cursorElRef.current) return;
+      const timing = { duration: 420, easing: 'cubic-bezier(.2, .8, .2, 1)' };
+      rippleRef.current.animate([
+        { transform: 'scale(0.3)', opacity: 0.9 },
+        { transform: 'scale(1.6)', opacity: 0 },
+      ], timing);
+      cursorElRef.current.querySelector('.cursor-star').animate([
+        { transform: 'scale(1)' }, { transform: 'scale(1.6)', offset: 0.3 }, { transform: 'scale(1)' },
+      ], timing);
+    };
+
+    // the pointer left the window: mouseout with nowhere to go
+    const onOut = (e) => {
+      if (!e.relatedTarget) onLeave();
+    };
+
+    const root = document.documentElement;
+    if (FINE_POINTER) root.classList.add('custom-cursor');
+    window.addEventListener('pointermove', onMove, { passive: true });
+    window.addEventListener('pointerdown', onDown, { passive: true });
+    window.addEventListener('blur', onLeave);
+    document.addEventListener('mouseout', onOut);
+    return () => {
+      root.classList.remove('custom-cursor');
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerdown', onDown);
+      window.removeEventListener('blur', onLeave);
+      document.removeEventListener('mouseout', onOut);
+    };
+  }, [setCursorState]);
 
   return (
     <>
       <canvas
         ref={canvasRef}
         onClick={handleClick}
-        onMouseMove={handleMouseMove}
         style={{
           position: 'fixed',
           inset: 0,
@@ -476,6 +548,16 @@ function StarField() {
           <path d="M7 17L17 7"/>
           <path d="M7 7h10v10"/>
         </svg>
+      </div>
+      <div ref={cursorElRef} className="cursor" data-state="idle" aria-hidden="true">
+        <div className="cursor-ring" />
+        <div ref={rippleRef} className="cursor-ripple" />
+        <div className="cursor-star">
+          {/* dark outline keeps it visible on white text and the bright disk */}
+          <svg viewBox="-3 -3 30 30">
+            <path d={SPARKLE_PATH} fill="currentColor" stroke="#0a0a0a" strokeWidth="2.2" strokeLinejoin="round" paintOrder="stroke" />
+          </svg>
+        </div>
       </div>
     </>
   );

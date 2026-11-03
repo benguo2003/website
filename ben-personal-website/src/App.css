@@ -30,16 +30,11 @@
   pointer-events: none;
 }
 
-.main a,
-.main button {
+.main a {
   pointer-events: auto;
 }
 
 /* --- Hero --- */
-.hero {
-  padding: 0;
-}
-
 .hero-greeting {
   font-size: 15px;
   font-weight: 500;

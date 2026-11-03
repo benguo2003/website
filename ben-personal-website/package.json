@@ -4,7 +4,6 @@
   "private": true,
   "homepage": "http://www.benguo.tech",
   "dependencies": {
-    "@testing-library/jest-dom": "^5.17.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1"
@@ -12,14 +11,12 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test",
     "deploy": "./node_modules/gh-pages/bin/gh-pages-clean.js && gh-pages -d build",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
     "extends": [
-      "react-app",
-      "react-app/jest"
+      "react-app"
     ]
   },
   "browserslist": {

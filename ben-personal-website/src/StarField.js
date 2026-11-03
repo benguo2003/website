@@ -14,6 +14,35 @@ const COLORS = [
   '199, 210, 254',
 ];
 
+// Star glows are the same radial gradient at different sizes and opacities, so each
+// color's glow is drawn once to a sprite and stamped with drawImage instead of building
+// a gradient per star per frame.
+const GLOW_SPRITE_SIZE = 64;
+let glowSprites = null;
+function glowSprite(color) {
+  if (!glowSprites) {
+    glowSprites = {};
+    const half = GLOW_SPRITE_SIZE / 2;
+    COLORS.forEach((c) => {
+      const sprite = document.createElement('canvas');
+      sprite.width = sprite.height = GLOW_SPRITE_SIZE;
+      const g = sprite.getContext('2d');
+      const grad = g.createRadialGradient(half, half, 0, half, half, half);
+      grad.addColorStop(0, `rgba(${c},0.35)`);
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      g.fillStyle = grad;
+      g.fillRect(0, 0, GLOW_SPRITE_SIZE, GLOW_SPRITE_SIZE);
+      glowSprites[c] = sprite;
+    });
+  }
+  return glowSprites[color];
+}
+
+// connection lines are grouped into this many opacity levels and stroked once per level
+const LINE_ALPHA_LEVELS = 16;
+const LINE_MAX_ALPHA = 0.25;
+const lineBuckets = Array.from({ length: LINE_ALPHA_LEVELS }, () => []);
+
 // ── Black hole config ──
 const BLACK_HOLE_THRESHOLD = 30;  // click-spawned stars before the black hole appears
 const BLACK_HOLE_PREWARM = 12;    // start compiling the shader in the background at this count
@@ -233,7 +262,7 @@ function StarField() {
       star.color = COLORS[(Math.random() * COLORS.length) | 0];
       star.vx = (Math.random() - 0.5) * 0.06;
       star.vy = (Math.random() - 0.5) * 0.06;
-      star.born = Date.now();
+      star.born = performance.now();
       stars.push(star);
     } else {
       stars.push({
@@ -244,7 +273,7 @@ function StarField() {
         color: COLORS[(Math.random() * COLORS.length) | 0],
         vx: (Math.random() - 0.5) * 0.06,
         vy: (Math.random() - 0.5) * 0.06,
-        born: Date.now(),
+        born: performance.now(),
       });
     }
   }, []);
@@ -328,13 +357,12 @@ function StarField() {
     }
   }, []);
 
-  const draw = useCallback(() => {
+  const draw = useCallback((now) => {
     const c = canvasRef.current;
     if (!c) return;
     const ctx = c.getContext('2d');
     const stars = starsRef.current;
     const { w, h } = sizeRef.current;
-    const now = Date.now();
 
     ctx.clearRect(0, 0, w, h);
 
@@ -347,8 +375,7 @@ function StarField() {
       }
     }
 
-    // batch all connection lines
-    ctx.lineWidth = 0.6;
+    // connection lines, bucketed by opacity so each level is a single stroke
     for (let i = 0; i < stars.length; i++) {
       const a = stars[i];
       for (let j = i + 1; j < stars.length; j++) {
@@ -357,20 +384,30 @@ function StarField() {
         const dy = a.y - b.y;
         const distSq = dx * dx + dy * dy;
         if (distSq < CONNECTION_DIST_SQ) {
-          const alpha = (1 - Math.sqrt(distSq) / CONNECTION_DIST) * 0.25;
-          ctx.beginPath();
-          ctx.moveTo(a.x, a.y);
-          ctx.lineTo(b.x, b.y);
-          ctx.strokeStyle = `rgba(129,140,248,${alpha})`;
-          ctx.stroke();
+          const level = Math.ceil((1 - Math.sqrt(distSq) / CONNECTION_DIST) * LINE_ALPHA_LEVELS) - 1;
+          if (level >= 0) lineBuckets[level].push(a.x, a.y, b.x, b.y);
         }
       }
+    }
+    ctx.lineWidth = 0.6;
+    for (let k = 0; k < LINE_ALPHA_LEVELS; k++) {
+      const seg = lineBuckets[k];
+      if (!seg.length) continue;
+      ctx.beginPath();
+      for (let n = 0; n < seg.length; n += 4) {
+        ctx.moveTo(seg[n], seg[n + 1]);
+        ctx.lineTo(seg[n + 2], seg[n + 3]);
+      }
+      ctx.strokeStyle = `rgba(129,140,248,${((k + 1) / LINE_ALPHA_LEVELS) * LINE_MAX_ALPHA})`;
+      ctx.stroke();
+      seg.length = 0;
     }
 
     // draw stars
     for (let i = 0; i < stars.length; i++) {
       const star = stars[i];
-      const age = now - star.born;
+      // a star added during this frame's events can be stamped just after the frame time
+      const age = Math.max(0, now - star.born);
       const fadeIn = age < 800 ? age / 800 : 1;
       const pulse = 1 + Math.sin(now * 0.002 + star.phase) * 0.25;
       const r = star.r * pulse * fadeIn;
@@ -378,13 +415,9 @@ function StarField() {
 
       // glow
       const glowR = r * 5;
-      const grad = ctx.createRadialGradient(star.x, star.y, 0, star.x, star.y, glowR);
-      grad.addColorStop(0, `rgba(${star.color},${alpha * 0.35})`);
-      grad.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.beginPath();
-      ctx.arc(star.x, star.y, glowR, 0, TWO_PI);
-      ctx.fillStyle = grad;
-      ctx.fill();
+      ctx.globalAlpha = alpha;
+      ctx.drawImage(glowSprite(star.color), star.x - glowR, star.y - glowR, glowR * 2, glowR * 2);
+      ctx.globalAlpha = 1;
 
       // core
       ctx.beginPath();
